@@ -6,6 +6,11 @@
 # LVGL-native rotation values.
 # =============================================================================
 
+globals:
+  - id: rotation_boot_complete
+    type: bool
+    initial_value: 'false'
+
 select:
   - platform: template
     name: "Screen: Rotation"
@@ -33,6 +38,7 @@ esphome:
   on_boot:
     - priority: -150
       then:
+        - lambda: 'id(rotation_boot_complete) = true;'
         - script.execute: screen_apply_rotation
 
 script:
@@ -43,7 +49,8 @@ script:
           condition:
             lambda: |-
               const std::string current = id(screen_rotation_select).current_option();
-              return esphome::espframe::rotation_requires_developer_mode(current, id(developer_features_enabled).state);
+              return id(rotation_boot_complete) &&
+                     esphome::espframe::rotation_requires_developer_mode(current, id(developer_features_enabled).state);
           then:
             - select.set:
                 id: screen_rotation_select
