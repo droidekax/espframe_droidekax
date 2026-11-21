@@ -175,7 +175,7 @@ switch:
     icon: "mdi:update"
     optimistic: true
     # ESPFRAME:SETTING_FIELDS auto_update START
-    restore_mode: RESTORE_DEFAULT_ON
+    restore_mode: RESTORE_DEFAULT_OFF
     # ESPFRAME:SETTING_FIELDS auto_update END
     web_server:
       sorting_group_id: sg_firmware
