@@ -12,6 +12,8 @@ substitutions:
   name: "immich-frame-10inch"
   friendly_name: "Espframe 10inch"
   firmware_version: "0.0.0"
+  espframe_component_url: "https://github.com/droidekax/espframe_droidekax"
+  espframe_component_ref: "meine-aenderungen"
 
 packages:
   espframe: !include ../devices/guition-esp32-p4-jc8012p4a1/packages.yaml
