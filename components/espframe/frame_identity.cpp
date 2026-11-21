@@ -96,3 +96,4 @@ bool FrameIdentity::save(const std::string &name) {
   return true;
 }
 }  // namespace esphome::espframe
+// MEINTEST
