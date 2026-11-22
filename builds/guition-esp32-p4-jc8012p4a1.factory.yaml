@@ -11,7 +11,7 @@
 substitutions:
   name: "immich-frame-10inch"
   friendly_name: "Espframe 10inch"
-  firmware_version: "0.0.2"
+  firmware_version: "0.0.3"
   espframe_component_url: "https://github.com/droidekax/espframe_droidekax"
   espframe_component_ref: "meine-aenderungen"
 

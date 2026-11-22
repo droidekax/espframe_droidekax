@@ -1,0 +1,30 @@
+# Slideshow pause: double-tap toggles, ends when the display turns off.
+
+globals:
+  - id: slideshow_user_paused
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+
+script:
+  - id: slideshow_toggle_pause
+    mode: single
+    then:
+      - lambda: |-
+          id(slideshow_user_paused) = !id(slideshow_user_paused);
+          if (id(slideshow_user_paused)) {
+            lv_obj_clear_flag(id(slideshow_pause_indicator), LV_OBJ_FLAG_HIDDEN);
+          } else {
+            lv_obj_add_flag(id(slideshow_pause_indicator), LV_OBJ_FLAG_HIDDEN);
+          }
+
+interval:
+  - interval: 5s
+    then:
+      - lambda: |-
+          if (!id(slideshow_user_paused)) return;
+          if (id(backlight_paused) || id(screen_schedule_asleep) ||
+              id(screensaver_display_off_active) || id(backlight_manual_off)) {
+            id(slideshow_user_paused) = false;
+            lv_obj_add_flag(id(slideshow_pause_indicator), LV_OBJ_FLAG_HIDDEN);
+          }
