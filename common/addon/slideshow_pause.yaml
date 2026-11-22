@@ -1,10 +1,26 @@
-# Slideshow pause: double-tap toggles, ends when the display turns off.
+# Slideshow pause (double-tap) and Immich QR code (triple-tap).
 
 globals:
   - id: slideshow_user_paused
     type: bool
     restore_value: false
     initial_value: 'false'
+  - id: tap_sequence_count
+    type: int
+    restore_value: false
+    initial_value: '0'
+  - id: slideshow_qr_visible
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: slideshow_qr_prev_paused
+    type: bool
+    restore_value: false
+    initial_value: 'false'
+  - id: slideshow_qr_asset
+    type: std::string
+    restore_value: false
+    initial_value: '""'
 
 script:
   - id: slideshow_toggle_pause
@@ -18,10 +34,70 @@ script:
             lv_obj_add_flag(id(slideshow_pause_indicator), LV_OBJ_FLAG_HIDDEN);
           }
 
-interval:
-  - interval: 5s
+  - id: slideshow_resolve_taps
+    mode: restart
+    then:
+      - delay: 400ms
+      - lambda: |-
+          const int taps = id(tap_sequence_count);
+          id(tap_sequence_count) = 0;
+          id(last_short_tap_ms) = 0;
+          if (taps == 2) {
+            id(slideshow_toggle_pause).execute();
+          } else if (taps >= 3) {
+            id(slideshow_toggle_qr).execute();
+          }
+
+  - id: slideshow_toggle_qr
+    mode: single
     then:
       - lambda: |-
+          if (id(slideshow_qr_visible)) {
+            id(slideshow_hide_qr).execute();
+            return;
+          }
+          auto &st = id(espframe_core).slideshow().state();
+          if (!st.active_slot_displayed) return;
+          auto &slot = get_slot(st.active_slot, st.slot0, st.slot1, st.slot2);
+          if (slot.asset_id.empty() || id(immich_url).state.empty()) return;
+          id(slideshow_qr_asset) = slot.asset_id;
+          const std::string url = id(immich_url).state + "/photos/" + slot.asset_id;
+          lv_qrcode_update(id(slideshow_qr), url.c_str(), url.length());
+          id(slideshow_qr_prev_paused) = id(slideshow_user_paused);
+          id(slideshow_user_paused) = true;
+          id(slideshow_qr_visible) = true;
+          lv_obj_clear_flag(id(slideshow_qr_box), LV_OBJ_FLAG_HIDDEN);
+          id(slideshow_qr_autohide).execute();
+
+  - id: slideshow_hide_qr
+    mode: restart
+    then:
+      - lambda: |-
+          if (!id(slideshow_qr_visible)) return;
+          id(slideshow_qr_autohide).stop();
+          id(slideshow_qr_visible) = false;
+          id(slideshow_user_paused) = id(slideshow_qr_prev_paused);
+          lv_obj_add_flag(id(slideshow_qr_box), LV_OBJ_FLAG_HIDDEN);
+
+  - id: slideshow_qr_autohide
+    mode: restart
+    then:
+      - delay: 60s
+      - script.execute: slideshow_hide_qr
+
+interval:
+  - interval: 1s
+    then:
+      - lambda: |-
+          if (id(slideshow_qr_visible)) {
+            const bool display_off = id(backlight_paused) || id(screen_schedule_asleep) ||
+                                     id(screensaver_display_off_active) || id(backlight_manual_off);
+            auto &st = id(espframe_core).slideshow().state();
+            auto &slot = get_slot(st.active_slot, st.slot0, st.slot1, st.slot2);
+            if (display_off || slot.asset_id != id(slideshow_qr_asset)) {
+              id(slideshow_hide_qr).execute();
+            }
+          }
           if (!id(slideshow_user_paused)) return;
           if (id(backlight_paused) || id(screen_schedule_asleep) ||
               id(screensaver_display_off_active) || id(backlight_manual_off)) {

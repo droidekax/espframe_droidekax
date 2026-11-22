@@ -337,6 +337,27 @@ lvgl:
                   scrollable: false
                   clickable: false
         - obj:
+            id: slideshow_qr_box
+            align: CENTER
+            width: 380
+            height: 380
+            radius: 24
+            bg_color: 0xFFFFFF
+            bg_opa: 100%
+            border_width: 0
+            pad_all: 0
+            scrollable: false
+            clickable: false
+            hidden: true
+            widgets:
+              - qrcode:
+                  id: slideshow_qr
+                  align: CENTER
+                  size: 330
+                  dark_color: 0x000000
+                  light_color: 0xFFFFFF
+                  text: "https://immich.app"
+        - obj:
             id: connection_failed_overlay
             align: CENTER
             width: ${display_width}
@@ -634,11 +655,12 @@ script:
             - lambda: |-
                 uint32_t now = millis();
                 if (id(last_short_tap_ms) != 0 && (now - id(last_short_tap_ms)) < 400) {
-                  id(last_short_tap_ms) = 0;
-                  id(slideshow_toggle_pause).execute();
+                  id(tap_sequence_count)++;
                 } else {
-                  id(last_short_tap_ms) = now;
+                  id(tap_sequence_count) = 1;
                 }
+                id(last_short_tap_ms) = now;
+            - script.execute: slideshow_resolve_taps
       - lambda: |-
           id(touch_started_while_off) = false;
           id(wake_touch_ms) = 0;
@@ -649,6 +671,7 @@ script:
       - script.stop: backlight_hold_timer
 
   - id: hide_connection_failed
+
     mode: single
     then:
       - lambda: |-
